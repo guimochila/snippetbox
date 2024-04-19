@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-playground/form/v4"
 	_ "github.com/go-sql-driver/mysql"
 	"snippetbox.guimochila.com/internal/models"
 )
@@ -22,6 +23,7 @@ type application struct {
 	logger        *slog.Logger
 	snippets      *models.SnippetModel
 	templateCache map[string]*template.Template
+	formDecoder   *form.Decoder
 }
 
 func main() {
@@ -55,11 +57,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Initialize a decoder instance
+	formdDecoder := form.NewDecoder()
+
 	// Initialize a new intance of our application struct
 	app := &application{
 		logger:        logger,
 		snippets:      &models.SnippetModel{DB: db},
 		templateCache: templateCache,
+		formDecoder:   formdDecoder,
 	}
 
 	logger.Info("starting server", slog.String("addr", ":4000"))
