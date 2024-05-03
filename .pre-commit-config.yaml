@@ -2,4 +2,5 @@ repos:
   - repo: https://github.com/tekwizely/pre-commit-golang
     rev: v1.0.0-rc.1
     hooks:
-      - id: go-test-mod 
+      - id: go-test-repo-mod
+      - id: go-test-repo-pkg
