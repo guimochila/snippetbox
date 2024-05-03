@@ -2,5 +2,4 @@ repos:
   - repo: https://github.com/tekwizely/pre-commit-golang
     rev: master
     hooks:
-      - id: my-cmd
-        args: [make, test]
+      - id: go-test-mod 
