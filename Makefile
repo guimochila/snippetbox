@@ -17,3 +17,15 @@ clean:
 
 lint:
 	golangci-lint run --enable-all
+
+test:
+	go test -v -short ./...
+
+test-all:
+	go test -v ./...
+
+test-coverage:
+	rm -rf tmp/coverage
+	mkdir tmp/coverage
+	go test -covermode=count -coverprofile=tmp/coverage/profile.out ./...
+	go tool cover -html=tmp/coverage/profile.out
