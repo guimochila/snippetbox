@@ -78,10 +78,12 @@ func (ts *testServer) get(t *testing.T, urlPath string) (int, http.Header, strin
 	}
 
 	defer rs.Body.Close()
+
 	body, err := io.ReadAll(rs.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	body = bytes.TrimSpace(body)
 
 	return rs.StatusCode, rs.Header, string(body)
@@ -94,10 +96,12 @@ func (ts *testServer) postForm(t *testing.T, urlPath string, form url.Values) (i
 	}
 
 	defer rs.Body.Close()
+
 	body, err := io.ReadAll(rs.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	body = bytes.TrimSpace(body)
 
 	return rs.StatusCode, rs.Header, string(body)
