@@ -23,6 +23,7 @@ import (
 )
 
 type application struct {
+	debug          bool
 	logger         *slog.Logger
 	snippets       models.SnippetModelInterface
 	users          models.UserModelInterface
@@ -34,6 +35,7 @@ type application struct {
 func main() {
 	addr := flag.String("addr", ":4000", "HTTP network address")
 	dsn := flag.String("dsn", "", "MySQL data source name")
+	debug := flag.Bool("debug", false, "Enable debug mode")
 	flag.Parse()
 
 	// Start logger
@@ -73,6 +75,7 @@ func main() {
 
 	// Initialize a new intance of our application struct
 	app := &application{
+		debug:          *debug,
 		logger:         logger,
 		snippets:       &models.SnippetModel{DB: db},
 		users:          &models.UserModel{DB: db},
