@@ -229,3 +229,15 @@ func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
+
+func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
+	id := app.sessionManager.Get(r.Context(), "authenticatedUserID").(int)
+	user, err := app.users.Get(id)
+	if err != nil {
+		http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+		return
+	}
+
+	body := fmt.Sprintf("%v", user)
+	fmt.Fprint(w, body)
+}
