@@ -91,7 +91,7 @@ func (m *UserModel) Get(id int) (User, error) {
 	var user User
 	sqlQuery := "SELECT id, name, email, created FROM users WHERE id = ?"
 
-	err := m.DB.QueryRow(sqlQuery, id).Scan(&user)
+	err := m.DB.QueryRow(sqlQuery, id).Scan(&user.ID, &user.Name, &user.Email, &user.Created)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return User{}, ErrNoRecord
