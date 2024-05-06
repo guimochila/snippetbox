@@ -1,6 +1,10 @@
 package mocks
 
-import "snippetbox.guimochila.com/internal/models"
+import (
+	"time"
+
+	"snippetbox.guimochila.com/internal/models"
+)
 
 type UserModel struct{}
 
@@ -28,4 +32,19 @@ func (m *UserModel) Exists(id int) (bool, error) {
 	default:
 		return false, nil
 	}
+}
+
+func (m *UserModel) Get(id int) (models.User, error) {
+	if id == 1 {
+		u := models.User{
+			ID:      1,
+			Name:    "Engineer",
+			Email:   "go@example.com",
+			Created: time.Now(),
+		}
+
+		return u, nil
+	}
+
+	return models.User{}, models.ErrNoRecord
 }
