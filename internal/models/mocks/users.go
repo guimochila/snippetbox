@@ -48,3 +48,15 @@ func (m *UserModel) Get(id int) (models.User, error) {
 
 	return models.User{}, models.ErrNoRecord
 }
+
+func (m *UserModel) PasswordUpdate(id int, currentPassword, newPassword string) error {
+	if id == 1 {
+		if currentPassword != "password" {
+			return models.ErrInvalidCredentails
+		}
+
+		return nil
+	}
+
+	return models.ErrNoRecord
+}
