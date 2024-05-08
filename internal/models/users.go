@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
+	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -40,9 +40,9 @@ func (m *UserModel) Insert(name, email, password string) error {
 
 	_, err = m.DB.Exec(sqlQuery, name, email, string(hashedPassword))
 	if err != nil {
-		var mySQLError *mysql.MySQLError
-		if errors.As(err, &mySQLError) {
-			if mySQLError.Number == 1062 && strings.Contains(mySQLError.Message, "users_uc_email") {
+		var pgErr *pq.Error
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && strings.Contains(pgErr.Detail, "users_uc_email") {
 				return ErrDuplicateEmail
 			}
 		}
