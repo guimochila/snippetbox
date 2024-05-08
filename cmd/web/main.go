@@ -120,7 +120,7 @@ func main() {
 
 	svrErrors := make(chan error, 1)
 	go func() {
-		svrErrors <- svr.ListenAndServeTLS("./tls/localhost.pem", "./tls/localhost-key.pem")
+		svrErrors <- svr.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	}()
 
 	quit := make(chan os.Signal)

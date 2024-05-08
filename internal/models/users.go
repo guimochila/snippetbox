@@ -36,7 +36,7 @@ func (m *UserModel) Insert(name, email, password string) error {
 		return err
 	}
 
-	sqlQuery := `INSERT INTO users (name, email, hashed_password, created) VALUES(?,?,?, UTC_TIMESTAMP())`
+	sqlQuery := `INSERT INTO users (name, email, hashed_password, created) VALUES($1, $2, $3, CURRENT_TIMESTAMP AT TIME ZONE 'UTC')`
 
 	_, err = m.DB.Exec(sqlQuery, name, email, string(hashedPassword))
 	if err != nil {
@@ -56,7 +56,7 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 	var id int
 	var hashedPassword []byte
 
-	sqlQuery := "SELECT id, hashed_password FROM users WHERE email = ?"
+	sqlQuery := "SELECT id, hashed_password FROM users WHERE email = $1"
 
 	err := m.DB.QueryRow(sqlQuery, email).Scan(&id, &hashedPassword)
 	if err != nil {
@@ -82,7 +82,7 @@ func (m *UserModel) Authenticate(email, password string) (int, error) {
 func (m *UserModel) Exists(id int) (bool, error) {
 	var exists bool
 
-	sqlQuery := "SELECT EXISTS(SELECT true FROM users WHERE id = ?)"
+	sqlQuery := "SELECT EXISTS(SELECT true FROM users WHERE id = $1)"
 
 	err := m.DB.QueryRow(sqlQuery, id).Scan(&exists)
 	return exists, err
@@ -90,7 +90,7 @@ func (m *UserModel) Exists(id int) (bool, error) {
 
 func (m *UserModel) Get(id int) (User, error) {
 	var user User
-	sqlQuery := "SELECT id, name, email, created FROM users WHERE id = ?"
+	sqlQuery := "SELECT id, name, email, created FROM users WHERE id = $1"
 
 	err := m.DB.QueryRow(sqlQuery, id).Scan(&user.ID, &user.Name, &user.Email, &user.Created)
 	if err != nil {
