@@ -26,14 +26,12 @@ type SnippetModel struct {
 
 func (m *SnippetModel) Insert(title string, content string, expires int) (int, error) {
 	sqlQuery := `INSERT INTO snippets (title, content, created, expires)
-  VALUES(?, ?, UTC_TIMESTAMP(), DATE_ADD(UTC_TIMESTAMP(), INTERVAL ? DAY))`
+  VALUES($1, $2, CURRENT_TIMESTAMP AT TIME ZONE 'UTC', CURRENT_TIMESTAMP AT TIME ZONE 'UTC' + INTERVAL '1 DAY' * $3)
+  RETURNING id`
 
-	result, err := m.DB.Exec(sqlQuery, title, content, expires)
-	if err != nil {
-		return 0, err
-	}
+	var id int
 
-	id, err := result.LastInsertId()
+	err := m.DB.QueryRow(sqlQuery, title, content, expires).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -45,7 +43,7 @@ func (m *SnippetModel) Get(id int) (Snippet, error) {
 	var s Snippet
 
 	sqlQuery := `SELECT id, title, content, created, expires  FROM snippets
-  WHERE expires > UTC_TIMESTAMP() AND id = ?`
+  WHERE expires > CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AND id = $1`
 
 	err := m.DB.QueryRow(sqlQuery, id).Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
 	if err != nil {
@@ -61,7 +59,7 @@ func (m *SnippetModel) Get(id int) (Snippet, error) {
 
 func (m *SnippetModel) Latest() ([]Snippet, error) {
 	sqlQuery := `SELECT id, title, content, created, expires FROM snippets
-  WHERE expires > UTC_TIMESTAMP() ORDER BY id DESC LIMIT 10`
+  WHERE expires > CURRENT_TIMESTAMP AT TIME ZONE 'UTC' ORDER BY id DESC LIMIT 10`
 
 	rows, err := m.DB.Query(sqlQuery)
 	if err != nil {

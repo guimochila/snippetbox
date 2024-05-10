@@ -15,14 +15,25 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alexedwards/scs/mysqlstore"
+	"github.com/alexedwards/scs/postgresstore"
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"snippetbox.guimochila.com/internal/models"
 )
 
+type config struct {
+	port int
+	db   struct {
+		dsn          string
+		maxOpenConns int
+		maxIdleConns int
+		maxIdleTime  time.Duration
+	}
+}
+
 type application struct {
+	config         config
 	debug          bool
 	logger         *slog.Logger
 	snippets       models.SnippetModelInterface
@@ -33,9 +44,16 @@ type application struct {
 }
 
 func main() {
-	addr := flag.String("addr", ":4000", "HTTP network address")
-	dsn := flag.String("dsn", "", "MySQL data source name")
+	var cfg config
+
+	flag.IntVar(&cfg.port, "port", 4000, "HTTP server port")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("SNIPPETBOX_DB_DSN"), "PostgreSQL DSN")
 	debug := flag.Bool("debug", false, "Enable debug mode")
+
+	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
+	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idel connections")
+	flag.DurationVar(&cfg.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "PostgreSQL max connection idle time")
+
 	flag.Parse()
 
 	// Start logger
@@ -43,13 +61,12 @@ func main() {
 		AddSource: true,
 	}))
 
-	if *dsn == "" {
-		logger.Error("-dsn flag is missing or can't be empty")
+	if cfg.db.dsn == "" {
+		logger.Error("dsn flag is missing")
 		os.Exit(1)
 	}
 
-	db, err := openDB(*dsn)
-	fmt.Println(*dsn)
+	db, err := openDB(cfg)
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -69,12 +86,13 @@ func main() {
 
 	// Initialize a new Session Manager
 	sessionManager := scs.New()
-	sessionManager.Store = mysqlstore.New(db)
+	sessionManager.Store = postgresstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
 	sessionManager.Cookie.Secure = true
 
 	// Initialize a new intance of our application struct
 	app := &application{
+		config:         cfg,
 		debug:          *debug,
 		logger:         logger,
 		snippets:       &models.SnippetModel{DB: db},
@@ -91,7 +109,7 @@ func main() {
 	}
 
 	svr := &http.Server{
-		Addr:         *addr,
+		Addr:         fmt.Sprintf(":%d", cfg.port),
 		Handler:      app.routes(),
 		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
 		TLSConfig:    tlsConfig,
@@ -102,7 +120,7 @@ func main() {
 
 	svrErrors := make(chan error, 1)
 	go func() {
-		svrErrors <- svr.ListenAndServeTLS("./tls/localhost.pem", "./tls/localhost-key.pem")
+		svrErrors <- svr.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	}()
 
 	quit := make(chan os.Signal)
@@ -131,13 +149,21 @@ func gracefulShutdown(svr *http.Server) func(reason interface{}) {
 	}
 }
 
-func openDB(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("mysql", dsn)
+func openDB(cfg config) (*sql.DB, error) {
+	db, err := sql.Open("postgres", cfg.db.dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.Ping()
+	db.SetMaxOpenConns(cfg.db.maxOpenConns)
+	db.SetMaxIdleConns(cfg.db.maxIdleConns)
+	db.SetConnMaxIdleTime(cfg.db.maxIdleTime)
+
+	// Create a context with a 5-second timeout deadline
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = db.PingContext(ctx)
 	if err != nil {
 		db.Close()
 		return nil, err
