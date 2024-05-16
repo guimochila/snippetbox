@@ -1,11 +1,18 @@
-FROM golang:1.22.3-alpine
+FROM golang:1.22.3-alpine as build-stage
 
 WORKDIR /app
 
-COPY go.mod ./
+COPY go.mod .
 RUN go mod download
 
-COPY * ./
-RUN go build -o snippetbox
+# Copy source code
+COPY . .
+RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o /snippetbox ./cmd/web
 
-CMD ["/app/snippetbox"]
+FROM alpine:latest as build-release
+
+WORKDIR /app
+
+COPY --from=build-stage /snippetbox /snippetbox
+
+ENTRYPOINT ["/snippetbox"]
