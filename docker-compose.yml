@@ -17,8 +17,10 @@ services:
       - traefik.http.routers.portainer.entrypoints=web-secure
       - traefik.http.routers.portainer.tls=true
     networks:
-      - traefik-public
+      - public
+      - private
 
 networks:
-  traefik-public:
+  public:
     external: true
+  private:
