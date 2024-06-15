@@ -5,3 +5,6 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE INDEX IF NOT EXISTS sessions_expiry_idx ON sessions (expiry);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.sessions TO web;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.sessions_expiry_idx TO web;

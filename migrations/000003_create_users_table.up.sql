@@ -7,3 +7,6 @@ CREATE TABLE users (
 );
 
 ALTER TABLE users ADD CONSTRAINT users_uc_email UNIQUE (email);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.users TO web;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.users_uc_email TO web;

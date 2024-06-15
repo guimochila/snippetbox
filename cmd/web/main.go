@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"database/sql"
 	"flag"
 	"fmt"
@@ -104,15 +103,10 @@ func main() {
 
 	logger.Info("starting server", slog.String("addr", ":4000"))
 
-	tlsConfig := &tls.Config{
-		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
-	}
-
 	svr := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.port),
 		Handler:      app.routes(),
 		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
-		TLSConfig:    tlsConfig,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
@@ -120,7 +114,7 @@ func main() {
 
 	svrErrors := make(chan error, 1)
 	go func() {
-		svrErrors <- svr.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
+		svrErrors <- svr.ListenAndServe()
 	}()
 
 	quit := make(chan os.Signal)

@@ -1,4 +1,9 @@
 pre-commit:
   commands:
-    fmt:
-      run: go fmt
+    gofmt:
+      glob: "*.go"
+      run: go fmt {staged_files}
+    govet:
+      files: git ls-files -m
+      glob: "*.go"
+      run: go vet {files}

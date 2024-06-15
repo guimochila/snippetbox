@@ -7,3 +7,7 @@ CREATE TABLE IF NOT EXISTS snippets (
 );
 
 CREATE INDEX IF NOT EXISTS idx_snippets_created ON snippets(created);
+
+GRANT USAGE ON SCHEMA public TO web;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.snippets TO web;
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.idx_snippets_created TO web;
